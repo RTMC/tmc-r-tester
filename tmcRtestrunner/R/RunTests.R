@@ -9,15 +9,22 @@ runTests <- function(projectPath, print=FALSE) {
   tmcrTestRunnerProjectPath <- getwd()
 
   #runs test for project, returns testthatOuput with added points.
-  testthatOutput <- .RunTestsProject(projectPath)
+  #using tryCatch: if any errors occur testthatOutput is NULL.
+  testthatOutput <- tryCatch({
+    .RunTestsProject(projectPath)}
+    ,error=function(error) { return(NULL)})
 
-  jsonResults <- .CreateJsonResults(testthatOutput)
-  .WriteJson(jsonResults)
-
-  if (print) {
-    .PrintResultsFromJson(jsonResults)
+  #There was an error in runTests
+  if (is.null(testthatOutput)) {
+    #Results only contain traceback of error. TODO: traceback
+    jsonResults <- list(list(traceback = c("")))
+    if (print) cat("Error while running tests. Sorry, no traceback yet.")
+  } else {
+    jsonResults <- .CreateJsonResults(testthatOutput)
+    if (print) .PrintResultsFromJson(jsonResults)
   }
 
+  .WriteJson(jsonResults)
   setwd(tmcrTestRunnerProjectPath)
 }
 

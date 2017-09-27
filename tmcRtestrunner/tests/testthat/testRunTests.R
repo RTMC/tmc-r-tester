@@ -3,6 +3,15 @@ test_resources_dir <- paste(sep = "", getwd(), "/resources")
 #projects for testing:
 simple_all_tests_pass_project_path <- paste(sep = "", test_resources_dir, "/simple_all_tests_pass")
 simple_some_tests_fail_project_path <- paste(sep = "", test_resources_dir, "/simple_some_tests_fail")
+simple_source_code_error_project_path <- paste(sep = "", test_resources_dir, "/simple_source_code_error")
+
+#removes projects .result.json, if it exists.
+removeProjectsResultJson <- function(project_path) {
+  results_json_path <- paste(sep="", project_path, "/.results.json")
+  if (file.exists(results_json_path)) {
+    file.remove(results_json_path)
+  }
+}
 
 test_that("Test pass in simple_all_tests_pass", {
   results <- .RunTestsProject(simple_all_tests_pass_project_path)
@@ -63,7 +72,26 @@ test_that("RunTests works with printing", {
   expect_true(file.exists(paste(sep="", simple_some_tests_fail_project_path, "/.results.json")))
 })
 
+test_that("Project with error is handled correctly", {
+  #remove old .results.json if it exists
+  removeProjectsResultJson(simple_source_code_error_project_path)
 
+  runTests(simple_source_code_error_project_path, FALSE)
+
+  results_json_path <- paste(sep="", simple_source_code_error_project_path, "/.results.json")
+  resultsJson <- read_json(results_json_path)
+
+  #results.json should have only one list
+  expect_equal(length(resultsJson), 1)
+
+  #this list should only contain one element
+  expect_equal(length(resultsJson[[1]]), 1)
+
+  #this element should be named traceback, which is a list and has ony element "" in it.
+  expect_equal("traceback", names(resultsJson[[1]]))
+  expect_equal(1, length(resultsJson[[1]]$traceback))
+  expect_equal("", resultsJson[[1]]$traceback[[1]])
+})
 
 # test_that("RunTests works", {
 #   runTests(simple_all_tests_pass_project_path)
