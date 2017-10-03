@@ -14,8 +14,7 @@ Depends:
   jsonlite
 Imports:
   testthat,
-  jsonlite,
-  lintr
+  jsonlite
 Suggests:
   lintr
 Collate:
