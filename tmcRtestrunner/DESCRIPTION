@@ -11,8 +11,7 @@ Encoding: UTF-8
 LazyData: true
 Depends:
   testthat,
-  jsonlite,
-  lintr
+  jsonlite
 Imports:
   testthat,
   jsonlite,
