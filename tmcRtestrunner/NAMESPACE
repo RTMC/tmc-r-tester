@@ -1,4 +1,4 @@
 exportPattern("^[[:alpha:]]+")
-install_github(jimhester/lintr)
+
 import(testthat)
 import(jsonlite)
