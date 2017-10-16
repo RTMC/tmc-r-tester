@@ -19,5 +19,12 @@ test_that("Zipfile is unpacked", {
   .tmc_zip(pack_folder_path, "resources/testZip")
   .tmc_unzip("resources/testZip.zip", "resources/unpack")
   file.remove("resources/testZip.zip")
-  expect_true(file.exists("resources/unpack/zipfile1.R"))
+  expect_true(file.exists("resources/unpack/packfile1.R"))
+})
+
+test_that("Tarfile is unpacked", {
+  .tmc_tar(pack_folder_path, "resources/testTar")
+  .tmc_untar("resources/testTar.tar", "resources/unpack")
+  file.remove("resources/testTar.tar")
+  expect_true(file.exists("resources/unpack/packfile1.R"))
 })
