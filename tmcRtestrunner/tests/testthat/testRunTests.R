@@ -3,13 +3,7 @@ test_resources_dir <- paste(sep = "", getwd(), "/resources")
 #projects for testing:
 simple_all_tests_pass_project_path <- paste(sep = "", test_resources_dir, "/simple_all_tests_pass")
 simple_some_tests_fail_project_path <- paste(sep = "", test_resources_dir, "/simple_some_tests_fail")
-
-remove_old_results_json <- function(project_path) {
-  results_json_path <- paste(sep = "", project_path, "/.results.json")
-  if (file.exists(results_json_path)) {
-    file.remove(results_json_path)
-  }
-}
+simple_source_code_error_project_path <- paste(sep = "", test_resources_dir, "/simple_source_code_error")
 
 test_that("Test pass in simple_all_tests_pass", {
   test_results <- .run_tests_project(simple_all_tests_pass_project_path)
@@ -60,43 +54,90 @@ test_that("Not all tests pass in simple_some_tests_fail.", {
   expect_equal(test_results[[5]]$status, "pass")
 })
 
-test_that(".results.json written as expected for simple_some_tests_fail", {
+test_that("run_results returns and writes.results.json as expected for simple_some_tests_fail", {
   remove_old_results_json(simple_some_tests_fail_project_path)
 
-  run_tests(simple_some_tests_fail_project_path)
+  test_results <- run_tests(simple_some_tests_fail_project_path)
   results_json <- read_json(paste(sep = "", simple_some_tests_fail_project_path, "/.results.json"))
+  test_results_json <- results_json$testResults
 
-  #Expectation of what .result.json should be (includes all the expected test results):
-  expected_json_result <- list()
-  expected_json_result[[1]] <- list(status = "pass", name = "ret_true works.", message = "", backtrace = list(), points = list("r1", "r1.1"))
-  expected_json_result[[2]] <- list(status = "pass", name = "ret_one works.", message = "", backtrace = list(), points = list("r1", "r1.2"))
-  expected_json_result[[3]] <- list(status = "pass", name = "add works.", message = "", backtrace = list(), points = list("r1", "r1.3", "r1.4"))
-  expected_json_result[[4]] <- list(status = "fail", name = "ret_false returns true", message = "Failed with call: expect_true, ret_false()\nret_false() isn't true.\n", backtrace = list(), points = list("r1", "r1.5"))
-  expected_json_result[[5]] <- list(status = "pass", name = "ret_true works but there are no points.", message = "", backtrace = list(), points = list("r1"))
+  #runStatus should be true and backtrace empty
+  expect_equal(results_json$runStatus, "success")
+  expect_equal(results_json$backtrace, list())
 
-  for (i in 1:5) expect_equal(results_json[[i]], expected_json_result[[i]])
+  #expected results for simple_some_tests_fail
+  expected_test_result <- list()
+  expected_test_result[[1]] <- list(status = "pass", name = "ret_true works.",
+                                    message = "", backtrace = list(), points = list("r1", "r1.1"))
+  expected_test_result[[2]] <- list(status = "pass", name = "ret_one works.",
+                                    message = "", backtrace = list(), points = list("r1", "r1.2"))
+  expected_test_result[[3]] <- list(status = "pass", name = "add works.",
+                                    message = "", backtrace = list(), points = list("r1", "r1.3", "r1.4"))
+  expected_test_result[[4]] <- list(status = "fail", name = "ret_false returns true",
+                                    message = "Failed with call: expect_true, ret_false()\nret_false() isn't true.\n",
+                                    backtrace = list(), points = list("r1", "r1.5"))
+  expected_test_result[[5]] <- list(status = "pass", name = "ret_true works but there are no points.",
+                                    message = "", backtrace = list(), points = list("r1"))
+
+  #.results.json is as expected
+  for (i in 1:5) expect_equal(test_results_json[[i]], expected_test_result
+                          [[i]])
+  #test_results returns as expected
+  for (i in 1:5) {
+    expect_equal(test_results[[i]]$status, expected_test_result[[i]]$status)
+    expect_equal(test_results[[i]]$name, expected_test_result[[i]]$name)
+    expect_equal(test_results[[i]]$message, expected_test_result[[i]]$message)
+    expect_equal(test_results[[i]]$backtrace, expected_test_result[[i]]$backtrace)
+    expect_equal(as.list(test_results[[i]]$points), expected_test_result[[i]]$points)
+  }
 })
 
 test_that("RunTests does print on print = TRUE", {
   #simple_all_tests_pass prints as expected
-  expect_output(run_tests(simple_all_tests_pass_project_path, print = TRUE), "ret_true works.: pass\nret_one works.: pass\nadd works.: pass")
+  expect_output(run_tests(simple_all_tests_pass_project_path, print = TRUE),
+                "ret_true works.: pass\nret_one works.: pass\nadd works.: pass")
 })
 
 test_that("RunTests doesn't print on print = FALSE", {
   expect_silent(run_tests(simple_all_tests_pass_project_path, print = FALSE))
 })
 
-test_that("run_available_points works and runs available_points", {
+test_that("run_tests handles simple_source_code_error accordingly.", {
+  remove_old_results_json(simple_source_code_error_project_path)
 
-  ##Call run_available_points
-  run_available_points(simple_all_tests_pass_project_path)
+  #expecting an error message when running source code with error:
+  expect_error(run_tests(simple_source_code_error_project_path))
 
-  ##Get the path to the supposed file.
-  available_points_path <- paste(sep="", simple_all_tests_pass_project_path, "/.available_points.json")
+  results_json <- read_json(paste(sep = "", simple_source_code_error_project_path, "/.results.json"))
 
-  #Check that the file exists
-  expect_equal(T, file.exists(available_points_path))
+  #runStatus whould be "sourcing_failed", backtrace empty and testResults empty
+  expect_equal(results_json$runStatus, "sourcing_failed")
+  expect_equal(results_json$backtrace, list())
+  expect_equal(results_json$testResults, list())
+})
 
-  #Delete the file afterwards.
-  file.remove(available_points_path)
+test_that("Sourcing works from main.R file in all tests pass", {
+  orig <- getwd()
+  files <- list.files(path = paste0(simple_all_tests_pass_project_path, "/tests/testthat"),
+                      pattern = "test.*\\.R", full.names = T, recursive = FALSE)
+  setwd(simple_all_tests_pass_project_path)
+  file <- files[[1]]
+  alt_env <- .create_test_env_file(file)
+  expect_true(exists("ret_true", where = alt_env, mode = "function"))
+  expect_true(exists("ret_one", where = alt_env, mode = "function"))
+  expect_true(exists("add", where = alt_env, mode = "function"))
+  expect_true(!exists("minus", where = alt_env, mode = "function"))
+  setwd(orig)
+})
+
+test_that("Sourcing works from main.R file in all tests pass", {
+  orig <- getwd()
+  files <- list.files(path = paste0(simple_all_tests_pass_project_path, "/tests/testthat"),
+                      pattern = "test.*\\.R", full.names = T, recursive = FALSE)
+  setwd(simple_all_tests_pass_project_path)
+  file <- files[[2]]
+  alt_env <- .create_test_env_file(file)
+  expect_true(exists("minus", envir = alt_env, mode = "function"))
+  expect_true(!exists("ret_true", envir = alt_env, mode = "function"))
+  setwd(orig)
 })
