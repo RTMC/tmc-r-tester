@@ -2,9 +2,9 @@
 #test whether the student has used some function (and maybe with the correct
 #arguments)
 
-assign("plot", function(...) {
+plot <- function(...) {
     extras <- list(...)
-    if(!exists("used_plot_args")) {
+    if (!exists("used_plot_args")) {
         used_plot_args <<- unlist(extras)
     } else {
         used_plot_args <<- list(unlist(used_plot_args), unlist(extras))
@@ -13,9 +13,9 @@ assign("plot", function(...) {
     if (file.exists("Rplots.pdf")) {
         file.remove("Rplots.pdf")
     }
-}, envir = test_env)
+}
 
-assign("paste0", function(...) {
+paste0 <- function(...) {
     extras <- list(...)
     if (!exists("used_paste_args")) {
         used_paste_args <<- unlist(extras)
@@ -23,4 +23,4 @@ assign("paste0", function(...) {
         used_paste_args <<- list(unlist(used_paste_args), unlist(extras))
     }
     base::paste0(...)
-}, envir = test_env)
+}
