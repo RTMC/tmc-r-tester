@@ -138,6 +138,7 @@ test_that("Run fail handled accordingly.", {
   run_tests(simple_run_fail_project_path)
   results_json <- read_json(paste(sep = "", simple_run_fail_project_path, "/.results.json"))
 
+
   #runStatus whould be "run_fail", backtrace empty and testResults empty
   expect_equal(results_json$runStatus, "run_failed")
   expect_equal(results_json$backtrace, list())

@@ -14,6 +14,7 @@
 }
 
 .define_tester_functions <- function(test_env) {
+
   assign("points_for_all_tests", function(points) {
     .GlobalEnv$points_for_all_tests <- points
   }, envir=test_env)
@@ -34,6 +35,22 @@
     if (file.exists(mock_path)) {
         sys.source(mock_path, test_env)
     }
+}
+
+  assign("points_for_all_tests",function(points) {
+    .GlobalEnv$points_for_all_tests <- points
+  },envir=test_env)
+  lockBinding("points_for_all_tests",test_env)
+  #The test that wraps around test_that()-method and stores the points
+  #to global environment.
+  assign("test",function(desc, points, code,timeout = 30) {
+    .GlobalEnv$points[[desc]] <- points
+    withTimeout({
+      test_that(desc, code);
+    },
+    timeout = timeout);
+  },envir=test_env)
+  lockBinding("test",test_env)
 }
 
 # .source_from_test_file <- function(test_location, test_env) {

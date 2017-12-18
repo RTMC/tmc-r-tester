@@ -2,6 +2,7 @@ test_resources_dir <- paste(sep = "", getwd(), "/resources")
 
 #projects for testing:
 simple_all_tests_pass_project_path <- paste(sep = "", test_resources_dir, "/simple_all_tests_pass")
+
 simple_all_tests_pass_project_path_with_plot <- paste(sep = "",
                                 test_resources_dir,
                                 "/simple_all_tests_pass_with_plot")
