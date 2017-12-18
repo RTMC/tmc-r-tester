@@ -2,6 +2,9 @@ test_resources_dir <- paste(sep = "", getwd(), "/resources")
 
 #projects for testing:
 simple_all_tests_pass_project_path <- paste(sep = "", test_resources_dir, "/simple_all_tests_pass")
+simple_all_tests_pass_with_plot_project_path <- paste(sep = "",
+                        test_resources_dir,
+                        "/simple_all_tests_pass_with_plot")
 simple_some_tests_fail_project_path <- paste(sep = "", test_resources_dir, "/simple_some_tests_fail")
 simple_sourcing_fail_project_path <- paste(sep = "", test_resources_dir, "/simple_sourcing_fail")
 simple_run_fail_project_path <- paste(sep = "", test_resources_dir, "/simple_run_fail")
@@ -135,8 +138,18 @@ test_that("Run fail handled accordingly.", {
   run_tests(simple_run_fail_project_path)
   results_json <- read_json(paste(sep = "", simple_run_fail_project_path, "/.results.json"))
 
+
   #runStatus whould be "run_fail", backtrace empty and testResults empty
   expect_equal(results_json$runStatus, "run_failed")
   expect_equal(results_json$backtrace, list())
   expect_equal(results_json$testResults, list())
+})
+
+test_that("Test pass with overriden functions", {
+  remove_old_results_json(simple_all_tests_pass_with_plot_project_path)
+  test_results <- .run_tests_project(simple_all_tests_pass_with_plot_project_path)$test_results
+  #All tests should pass:
+  for (i in length(test_results)) {
+    expect_equal(test_results[[i]]$status, "pass")
+  }
 })
